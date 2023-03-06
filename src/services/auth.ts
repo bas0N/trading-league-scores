@@ -6,9 +6,7 @@ const auth = (userId: string, password: string) => {
   return new Promise((resolve, reject) => {
     const socket = new WebSocket("wss://ws.xtb.com/demo");
 
-    console.log("inside auth");
     socket.addEventListener("open", () => {
-      console.log("inside open", userId, password);
       // Log in to the API
       socket.send(
         JSON.stringify({
