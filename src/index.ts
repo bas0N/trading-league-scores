@@ -1,16 +1,19 @@
 import express, { Request, Response } from "express";
 import cron from "node-cron";
+import { auth } from "./services/auth";
+import WebSocket from "ws";
+import NodeCache from "node-cache";
 require("dotenv").config();
-console.log("eloelo");
 const app = express();
-cron.schedule("*/15 * * * * *", function () {
-  console.log("---------------------");
-  console.log("Running a cron job retrieving users");
-});
+//Cron job
+// cron.schedule("*/15 * * * * *", function () {
+//   console.log("---------------------");
+//   console.log("Running a cron job retrieving users");
+// });
 
+//basic endpoint
 app.get("/get-data", (req: Request, res: Response) => {
   //Retrieve data from the server
-
   res.send({ message: "siemanko" });
 });
 
@@ -25,8 +28,33 @@ const main = async () => {
 
   //sign in to all accounts
   for (let i = 1; i < numberOfTeams + 1; i++) {
+    const socket = new WebSocket("wss://ws.xtb.com/demoStream");
+
     console.log(process.env[`XTB_USER_ID_${i}`]);
-    console.log(process.env[`XTB_USER_PASSWORD_${i}`]);
+
+    //Loop through all users
+    if (process.env[`XTB_USER_ID_${i}`] && process.env[`XTB_USER_ID_${i}`]) {
+      //Retrieve sessionId
+      const streamSessionId = await auth(
+        process.env[`XTB_USER_ID_${i}`]!,
+        process.env[`XTB_USER_PASSWORD_${i}`]!
+      );
+      //Wait for the stream socket to connect
+      await waitForConnection(socket);
+      socket.addEventListener("message", ({ data }: { data: any }) => {
+        const packet = JSON.parse(data);
+        console.log(packet);
+      });
+      socket.send(
+        JSON.stringify({
+          command: "getBalance",
+          streamSessionId,
+        })
+      );
+    } else {
+      console.log("Env credentials missing");
+    }
+
     //pass credentials to the auth functions
 
     //get socket from each one and ask for data
@@ -34,3 +62,14 @@ const main = async () => {
     //save handle data and save to db
   }
 };
+function waitForConnection(webSocket: WebSocket) {
+  return new Promise((resolve, reject) => {
+    const timer = setInterval(() => {
+      if (webSocket.readyState === WebSocket.OPEN) {
+        clearInterval(timer);
+        console.log("connected!");
+        resolve(null);
+      }
+    }, 1000);
+  });
+}
