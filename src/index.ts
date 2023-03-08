@@ -70,6 +70,7 @@ const main = async () => {
             command: "stopBalance",
           })
         );
+        socket.close();
       });
     } else {
       console.log("Env credentials missing in iteration: ", i);
