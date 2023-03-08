@@ -16,8 +16,16 @@ const app = express();
 
 //basic endpoint
 app.get("/get-data", (req: Request, res: Response) => {
-  //Retrieve data from the server
-  res.send({ message: "siemanko" });
+  const keys = myCache.keys();
+  const values = [];
+  for (const key of keys) {
+    const value = myCache.get(key);
+    values.push(value);
+  }
+  if (values.length == 0) {
+    res.status(400).json({ message: "No values in cache yet." });
+  }
+  res.send(values);
 });
 
 app.listen(process.env.PORT, async () => {
