@@ -6,7 +6,7 @@ import NodeCache from "node-cache";
 import { areEnvCorrect } from "./services/areEnvCorrect";
 require("dotenv").config();
 
-export const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
+export const myCache = new NodeCache();
 
 const app = express();
 const cors = require("cors");
@@ -19,9 +19,10 @@ areEnvCorrect();
 const numberOfTeams = Number(process.env.NUM);
 
 //Cron job
-cron.schedule("0 */2 * * *", function () {
+cron.schedule("0 */2 * * *", async function () {
   console.log("---------------------");
   console.log("Running a cron job retrieving users");
+  await retrieveTeamsData();
 });
 
 //basic endpoint
@@ -32,7 +33,7 @@ app.get("/get-data", (req: Request, res: Response) => {
     const value = myCache.get(key);
     values.push(value);
   }
-  if (values.length == 0) {
+  if (values.length == 0 || values[0] == null) {
     return res.status(400).json({ message: "No values in cache yet." });
   }
   return res.send(values);
@@ -40,7 +41,7 @@ app.get("/get-data", (req: Request, res: Response) => {
 
 app.get("/refresh-cache", async (req: Request, res: Response) => {
   await retrieveTeamsData();
-  return res.send({ message: "refreshing" });
+  return res.send({ message: "refreshed" });
 });
 
 app.get("/get-trades/:id", async (req: Request, res: Response) => {
