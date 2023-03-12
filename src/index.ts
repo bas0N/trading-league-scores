@@ -12,8 +12,7 @@ const app = express();
 const cors = require("cors");
 app.use(
   cors({
-    origin: "*",
-    // origin: ["http://localhost:3000", "https://trading-bot-leauge.netlify.app"],
+    origin: ["http://localhost:3000", "https://trading-bot-leauge.netlify.app"],
   })
 );
 areEnvCorrect();
