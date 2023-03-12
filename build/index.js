@@ -20,19 +20,21 @@ const ws_1 = __importDefault(require("ws"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const areEnvCorrect_1 = require("./services/areEnvCorrect");
 require("dotenv").config();
-exports.myCache = new node_cache_1.default({ stdTTL: 100, checkperiod: 120 });
+exports.myCache = new node_cache_1.default();
 const app = (0, express_1.default)();
 const cors = require("cors");
 app.use(cors({
-    origin: "*",
-    // origin: ["http://localhost:3000", "https://trading-bot-leauge.netlify.app"],
+    origin: ["http://localhost:3000", "https://trading-bot-leauge.netlify.app"],
 }));
 (0, areEnvCorrect_1.areEnvCorrect)();
 const numberOfTeams = Number(process.env.NUM);
 //Cron job
 node_cron_1.default.schedule("0 */2 * * *", function () {
-    console.log("---------------------");
-    console.log("Running a cron job retrieving users");
+    return __awaiter(this, void 0, void 0, function* () {
+        console.log("---------------------");
+        console.log("Running a cron job retrieving users");
+        yield retrieveTeamsData();
+    });
 });
 //basic endpoint
 app.get("/get-data", (req, res) => {
@@ -42,14 +44,14 @@ app.get("/get-data", (req, res) => {
         const value = exports.myCache.get(key);
         values.push(value);
     }
-    if (values.length == 0) {
-        res.status(400).json({ message: "No values in cache yet." });
+    if (values.length == 0 || values[0] == null) {
+        return res.status(400).json({ message: "No values in cache yet." });
     }
-    res.send(values);
+    return res.send(values);
 });
 app.get("/refresh-cache", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield retrieveTeamsData();
-    res.send({ message: "refreshing" });
+    return res.send({ message: "refreshed" });
 }));
 app.get("/get-trades/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const socket = new ws_1.default("wss://ws.xtb.com/demo");
@@ -73,11 +75,12 @@ app.get("/get-trades/:id", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 console.log(packet);
                 res.send(packet.returnData);
                 socket.close();
+                return;
             });
         }
     }
     if (!accountExists) {
-        res.send({ message: "invalid id" });
+        return res.send({ message: "invalid id" });
     }
 }));
 app.listen(process.env.PORT, () => __awaiter(void 0, void 0, void 0, function* () {

@@ -35,13 +35,24 @@ app.get("/get-data", (req: Request, res: Response) => {
   }
   if (values.length == 0 || values[0] == null) {
     return res.status(400).json({ message: "No values in cache yet." });
+  } else {
+    return res.send(values);
   }
-  return res.send(values);
 });
 
-app.get("/refresh-cache", async (req: Request, res: Response) => {
+app.get("/refresh", async (req: Request, res: Response) => {
   await retrieveTeamsData();
-  return res.send({ message: "refreshed" });
+  const keys = myCache.keys();
+  const values = [];
+  for (const key of keys) {
+    const value = myCache.get(key);
+    values.push(value);
+  }
+  if (values.length == 0 || values[0] == null) {
+    return res.status(400).json({ message: "No values in cache yet." });
+  } else {
+    return res.send(values);
+  }
 });
 
 app.get("/get-trades/:id", async (req: Request, res: Response) => {
