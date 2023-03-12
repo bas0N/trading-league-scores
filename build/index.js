@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.myCache = void 0;
 const express_1 = __importDefault(require("express"));
 const node_cron_1 = __importDefault(require("node-cron"));
 const auth_1 = require("./services/auth");
@@ -19,27 +20,31 @@ const ws_1 = __importDefault(require("ws"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const areEnvCorrect_1 = require("./services/areEnvCorrect");
 require("dotenv").config();
-const myCache = new node_cache_1.default({ stdTTL: 100, checkperiod: 120 });
+exports.myCache = new node_cache_1.default({ stdTTL: 100, checkperiod: 120 });
 const app = (0, express_1.default)();
+const cors = require("cors");
+app.use(cors({
+    origin: "*",
+    // origin: ["http://localhost:3000", "https://trading-bot-leauge.netlify.app"],
+}));
 (0, areEnvCorrect_1.areEnvCorrect)();
 const numberOfTeams = Number(process.env.NUM);
 //Cron job
-node_cron_1.default.schedule("*/20 * * * *", function () {
+node_cron_1.default.schedule("0 */2 * * *", function () {
     console.log("---------------------");
     console.log("Running a cron job retrieving users");
 });
 //basic endpoint
 app.get("/get-data", (req, res) => {
-    const keys = myCache.keys();
+    const keys = exports.myCache.keys();
     const values = [];
     for (const key of keys) {
-        const value = myCache.get(key);
+        const value = exports.myCache.get(key);
         values.push(value);
     }
     if (values.length == 0) {
         res.status(400).json({ message: "No values in cache yet." });
     }
-    retrieveTeamsData();
     res.send(values);
 });
 app.get("/refresh-cache", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -107,7 +112,7 @@ const retrieveTeamsData = () => __awaiter(void 0, void 0, void 0, function* () {
                         time: new Date(),
                     };
                     balances.push(balanceEntry);
-                    myCache.set(process.env[`TEAM_NAME_${i}`], balanceEntry);
+                    exports.myCache.set(process.env[`TEAM_NAME_${i}`], balanceEntry);
                     // socket.send(
                     //   JSON.stringify({
                     //     command: "stopBalance",
@@ -122,7 +127,7 @@ const retrieveTeamsData = () => __awaiter(void 0, void 0, void 0, function* () {
         }
         setTimeout(() => {
             console.log(balances);
-            console.log(myCache.keys());
+            console.log(exports.myCache.keys());
         }, 6000);
         return;
     }
