@@ -9,6 +9,13 @@ require("dotenv").config();
 export const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 
 const app = express();
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "*",
+    // origin: ["http://localhost:3000", "https://trading-bot-leauge.netlify.app"],
+  })
+);
 areEnvCorrect();
 const numberOfTeams = Number(process.env.NUM);
 
