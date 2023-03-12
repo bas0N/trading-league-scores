@@ -33,14 +33,14 @@ app.get("/get-data", (req: Request, res: Response) => {
     values.push(value);
   }
   if (values.length == 0) {
-    res.status(400).json({ message: "No values in cache yet." });
+    return res.status(400).json({ message: "No values in cache yet." });
   }
-  res.send(values);
+  return res.send(values);
 });
 
 app.get("/refresh-cache", async (req: Request, res: Response) => {
   await retrieveTeamsData();
-  res.send({ message: "refreshing" });
+  return res.send({ message: "refreshing" });
 });
 
 app.get("/get-trades/:id", async (req: Request, res: Response) => {
@@ -71,11 +71,12 @@ app.get("/get-trades/:id", async (req: Request, res: Response) => {
         console.log(packet);
         res.send(packet.returnData);
         socket.close();
+        return;
       });
     }
   }
   if (!accountExists) {
-    res.send({ message: "invalid id" });
+    return res.send({ message: "invalid id" });
   }
 });
 
