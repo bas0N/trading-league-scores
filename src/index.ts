@@ -9,8 +9,11 @@ require("dotenv").config();
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 
 const app = express();
+areEnvCorrect();
+const numberOfTeams = Number(process.env.NUM);
+
 //Cron job
-cron.schedule("*/2 * * * *", function () {
+cron.schedule("*/20 * * * *", function () {
   console.log("---------------------");
   console.log("Running a cron job retrieving users");
 });
@@ -30,6 +33,47 @@ app.get("/get-data", (req: Request, res: Response) => {
   res.send(values);
 });
 
+app.get("/refresh-cache", async (req: Request, res: Response) => {
+  await retrieveTeamsData();
+  res.send({ message: "refreshing" });
+});
+
+app.get("/get-trades/:id", async (req: Request, res: Response) => {
+  const socket = new WebSocket("wss://ws.xtb.com/demo");
+  let accountExists = false;
+  for (let i = 1; i <= numberOfTeams; i++) {
+    if (req.params.id == process.env[`XTB_USER_ID_${i}`]) {
+      accountExists = true;
+      const ssid = await auth(
+        process.env[`XTB_USER_ID_${i}`]!,
+        process.env[`XTB_USER_PASSWORD_${i}`]!,
+        socket
+      );
+      console.log(ssid);
+      await waitForConnection(socket);
+      console.log(Date.now());
+      socket.send(
+        JSON.stringify({
+          command: "getTradesHistory",
+          arguments: {
+            end: 0,
+            start: 0,
+          },
+        })
+      );
+      socket.addEventListener("message", ({ data }: { data: any }) => {
+        const packet = JSON.parse(data);
+        console.log(packet);
+        res.send(packet.returnData);
+        socket.close();
+      });
+    }
+  }
+  if (!accountExists) {
+    res.send({ message: "invalid id" });
+  }
+});
+
 app.listen(process.env.PORT, async () => {
   console.log(`Listening on port: ${process.env.PORT}`);
   await retrieveTeamsData();
@@ -37,14 +81,12 @@ app.listen(process.env.PORT, async () => {
 
 const retrieveTeamsData = async () => {
   try {
-    areEnvCorrect();
-    const numberOfTeams = Number(process.env.NUM);
     console.log("num of teams:", numberOfTeams);
 
     let balances: any = [];
     //sign in to all accounts
-    for (let i = 1; i < numberOfTeams + 1; i++) {
-      const socket = new WebSocket("wss://ws.xtb.com/demoStream");
+    for (let i = 1; i <= numberOfTeams; i++) {
+      const socket = new WebSocket("wss://ws.xtb.com/demo");
 
       console.log(process.env[`XTB_USER_ID_${i}`]);
 
@@ -53,46 +95,39 @@ const retrieveTeamsData = async () => {
         //Retrieve sessionId
         const streamSessionId = await auth(
           process.env[`XTB_USER_ID_${i}`]!,
-          process.env[`XTB_USER_PASSWORD_${i}`]!
+          process.env[`XTB_USER_PASSWORD_${i}`]!,
+          socket
         );
         console.log(streamSessionId);
         //Wait for the stream socket to connect
         await waitForConnection(socket);
         socket.send(
           JSON.stringify({
-            command: "getBalance",
-            streamSessionId,
+            command: "getMarginLevel",
           })
         );
         socket.addEventListener("message", ({ data }: { data: any }) => {
           const packet = JSON.parse(data);
-          console.log(packet);
+          console.log("packet", packet);
           const balanceEntry = {
             teamName: process.env[`TEAM_NAME_${i}`],
             id: process.env[`XTB_USER_ID_${i}`],
-            balance: packet.data.balance,
-            equity: packet.data.equity,
+            returnData: packet.returnData,
             time: new Date(),
           };
           balances.push(balanceEntry);
 
           myCache.set(process.env[`TEAM_NAME_${i}`]!, balanceEntry);
-          socket.send(
-            JSON.stringify({
-              command: "stopBalance",
-            })
-          );
+          // socket.send(
+          //   JSON.stringify({
+          //     command: "stopBalance",
+          //   })
+          // );
           socket.close();
         });
       } else {
         console.log("Env credentials missing in iteration: ", i);
       }
-
-      //pass credentials to the auth functions
-
-      //get socket from each one and ask for data
-
-      //save handle data and save to db
     }
     setTimeout(() => {
       console.log(balances);

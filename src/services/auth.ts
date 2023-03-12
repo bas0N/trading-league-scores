@@ -2,9 +2,9 @@ import WebSocket from "ws";
 
 // const auth = async (userId: string, password: string) => {
 
-const auth = (userId: string, password: string) => {
+const auth = (userId: string, password: string, socket: WebSocket) => {
   return new Promise((resolve, reject) => {
-    const socket = new WebSocket("wss://ws.xtb.com/demo");
+    //const socket = new WebSocket("wss://ws.xtb.com/demo");
 
     socket.addEventListener("open", () => {
       // Log in to the API
