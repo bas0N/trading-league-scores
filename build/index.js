@@ -47,11 +47,24 @@ app.get("/get-data", (req, res) => {
     if (values.length == 0 || values[0] == null) {
         return res.status(400).json({ message: "No values in cache yet." });
     }
-    return res.send(values);
+    else {
+        return res.send(values);
+    }
 });
-app.get("/refresh-cache", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get("/refresh", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield retrieveTeamsData();
-    return res.send({ message: "refreshed" });
+    const keys = exports.myCache.keys();
+    const values = [];
+    for (const key of keys) {
+        const value = exports.myCache.get(key);
+        values.push(value);
+    }
+    if (values.length == 0 || values[0] == null) {
+        return res.status(400).json({ message: "No values in cache yet." });
+    }
+    else {
+        return res.send(values);
+    }
 }));
 app.get("/get-trades/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const socket = new ws_1.default("wss://ws.xtb.com/demo");
