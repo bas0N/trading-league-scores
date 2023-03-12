@@ -29,7 +29,6 @@ app.get("/get-data", (req: Request, res: Response) => {
   if (values.length == 0) {
     res.status(400).json({ message: "No values in cache yet." });
   }
-  retrieveTeamsData();
   res.send(values);
 });
 
