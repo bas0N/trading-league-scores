@@ -66,6 +66,15 @@ app.get("/get-trades/:id", async (req: Request, res: Response) => {
         process.env[`XTB_USER_PASSWORD_${i}`]!,
         socket
       );
+      if (ssid == "error") {
+        console.log(
+          "account that caused an error: ",
+          process.env[`XTB_USER_ID_${i}`]!,
+          process.env[`XTB_USER_PASSWORD_${i}`]!
+        );
+        return;
+      }
+
       console.log(ssid);
       await waitForConnection(socket);
       console.log(Date.now());

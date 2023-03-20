@@ -27,6 +27,7 @@ const auth = (userId: string, password: string, socket: WebSocket) => {
         //Pass socket to the function to allow it retrieve data from API
       } else if (packet.status == false) {
         console.log("error", data);
+        resolve("error");
       }
     });
   });
