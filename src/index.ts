@@ -18,13 +18,6 @@ app.use(
 areEnvCorrect();
 const numberOfTeams = Number(process.env.NUM);
 
-//Cron job
-cron.schedule("0 */2 * * *", async function () {
-  console.log("---------------------");
-  console.log("Running a cron job retrieving users");
-  await retrieveTeamsData();
-});
-
 //basic endpoint
 app.get("/get-data", (req: Request, res: Response) => {
   const keys = myCache.keys();
@@ -100,7 +93,13 @@ app.get("/get-trades/:id", async (req: Request, res: Response) => {
     return res.send({ message: "invalid id" });
   }
 });
+//Cron job
 
+cron.schedule("*/20 * * * *", async function () {
+  console.log("---------------------");
+  console.log("Running a cron job retrieving users");
+  await retrieveTeamsData();
+});
 app.listen(process.env.PORT, async () => {
   console.log(`Listening on port: ${process.env.PORT}`);
   await retrieveTeamsData();
@@ -139,7 +138,9 @@ const retrieveTeamsData = async () => {
           const balanceEntry = {
             teamName: process.env[`TEAM_NAME_${i}`],
             id: process.env[`XTB_USER_ID_${i}`],
-            returnData: packet.returnData,
+            returnData: packet.returnData
+              ? packet.returnData
+              : { balance: undefined, equity: undefined },
             time: new Date(),
           };
           balances.push(balanceEntry);
