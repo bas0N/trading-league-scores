@@ -68,7 +68,7 @@ app.get("/get-trades/:id", async (req: Request, res: Response) => {
       );
       if (ssid == "error") {
         console.log(
-          "account that caused an error: ",
+          "account that caused an error:  ",
           process.env[`XTB_USER_ID_${i}`]!,
           process.env[`XTB_USER_PASSWORD_${i}`]!
         );
