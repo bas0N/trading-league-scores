@@ -24,6 +24,7 @@ const auth = (userId, password, socket) => {
             }
             else if (packet.status == false) {
                 console.log("error", data);
+                resolve("error");
             }
         });
     });

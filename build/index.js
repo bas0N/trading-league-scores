@@ -73,6 +73,10 @@ app.get("/get-trades/:id", (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (req.params.id == process.env[`XTB_USER_ID_${i}`]) {
             accountExists = true;
             const ssid = yield (0, auth_1.auth)(process.env[`XTB_USER_ID_${i}`], process.env[`XTB_USER_PASSWORD_${i}`], socket);
+            if (ssid == "error") {
+                console.log("account that caused an error:  ", process.env[`XTB_USER_ID_${i}`], process.env[`XTB_USER_PASSWORD_${i}`]);
+                return;
+            }
             console.log(ssid);
             yield waitForConnection(socket);
             console.log(Date.now());
